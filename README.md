@@ -40,19 +40,34 @@ Five fields across the file output raw values with no encoding applied. A malici
 
 ### Environment Setup
 
-[Notes on setting up your local development environment - challenges you faced, how you solved them]
+Set up CARLOS EMR using Docker Desktop and docker-compose. The devcontainer build hung indefinitely on the Playwright browser installation step (step 15/37). 
+
+Fixed by commenting out the Playwright install lines in `.devcontainer/development/Dockerfile` since Playwright is not needed for this fix. Used `docker-compose up -d --build` directly instead of the VS Code devcontainer flow. 
+
+First `make install` was OOM killed, fixed it with `export MAVEN_OPTS="-Xmx1512m -Xms512m"` before running `make install`. Build completed successfully after that.
 
 ### Steps to Reproduce
 
-1. [Step 1]
-2. [Step 2]
-3. [Observed result]
+1. Log into CARLOS at `http://localhost:8080/carlos` with username `carlosdoc`, password `carlos2026`, PIN `2026`
+2. Click **eDoc** in the top navigation
+3. Click **Add HTML**
+4. Fill in all fields - Type: desktop, Report Class: Other Letter, Description: xss test, Responsible Provider: system system, Source Author: `<img src=x onerror=alert(1)>`, Source Facility: test, Html: test, check Public
+6. Click Submit
+7. Click the edit icon on the saved document
+8. Right click page, View Page Source, search for `img src=x`
+
+**Expected:** `&lt;img src=x onerror=alert(1)&gt;` : HTML encoded
+**Actual:** `value="<img src=x onerror=alert(1)>"` : raw unencoded payload in HTML attribute
+
 
 ### Reproduction Evidence
 
-- **Commit showing reproduction:** [Link to commit in your fork]
-- **Screenshots/logs:** [If applicable]
-- **My findings:** [What you discovered during reproduction]
+- **Commit showing reproduction:** [[carlos/tree/2315-bug-addedithtmldocument-xss]](https://github.com/kpuentec/carlos/tree/2315-bug-addedithtmldocument-xss)
+- **Screenshots/logs:**
+  - ![Edit form showing unencoded payload](assets/evidence1.webp)
+  - ![Page source showing unencoded value](assets/preview.webp)
+  - ![alert(1) executing](assets/ss.webp)
+- **My findings:** The `carlos` taglib is already declared and used on other fields in the same file but was not applied to these five specific fields.
 
 ---
 
@@ -60,30 +75,30 @@ Five fields across the file output raw values with no encoding applied. A malici
 
 ### Analysis
 
-[Your analysis of the root cause - what's causing the issue?]
+Root cause is in `addedithtmldocument.jsp`. Five fields output raw database values without HTML encoding. The `carlos:encode` taglib is already imported at the top of the file and used on other fields, but it was simply not applied to these five.
 
 ### Proposed Solution
 
-[High-level description of your fix approach]
+Wrap each of the five vulnerable fields with `<carlos:encode>` using the appropriate context. `htmlAttribute` for fields inside HTML attributes, `html` for fields in the HTML body, and `javaScriptBlock` for the JS subclass array.
 
 ### Implementation Plan
 
-Using UMPIRE framework (adapted):
+**Understand:** Five fields in `addedithtmldocument.jsp` render database values directly into HTML without encoding, allowing stored XSS for any provider who opens the document edit form.
 
-**Understand:** [Restate the problem]
+**Match:** The `carlos:encode` taglib pattern is already used throughout this exact file on other fields. The fix follows the identical pattern already established in the codebase.
 
-**Match:** [What similar patterns/solutions exist in the codebase?]
+**Plan:**
+1. Wrap `formdata.getSource()` on line 404 with `carlos:encode` in `htmlAttribute` context
+2. Wrap `formdata.getSourceFacility()` on line 408 with `carlos:encode` in `htmlAttribute` context
+3. Wrap `EDocUtil.getProviderName(formdata.getDocCreator())` on line 373 with `carlos:encode` in `html` context
+4. Wrap `EDocUtil.getProviderName(formdata.getReviewerId())` on line 428 with `carlos:encode` in `html` context
+5. Wrap `subClasses.get(i)` on line 287 with `carlos:encode` in `javaScriptBlock` context
 
-**Plan:** [Step-by-step implementation plan]
-1. [Modify file X to do Y]
-2. [Add function Z]
-3. [Update tests]
+**Implement:** https://github.com/kpuentec/carlos/tree/2315-bug-addedithtmldocument-xss
 
-**Implement:** [Link to your branch/commits as you work]
+**Review:** Will verify all changes match existing `carlos:encode` patterns in the file, use DCO sign-off on all commits (`git commit -s`), and target the `develop` branch per CONTRIBUTING.md.
 
-**Review:** [Self-review checklist - does it follow the project's contribution guidelines?]
-
-**Evaluate:** [How will you verify it works?]
+**Evaluate:** After fix, reload the edit form — page source should show `&lt;img src=x onerror=alert(1)&gt;` instead of the raw tag. Run `make install --run-unit-tests` to confirm no regressions.
 
 ---
 
