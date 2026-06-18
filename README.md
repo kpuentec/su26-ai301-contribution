@@ -133,7 +133,7 @@ Implemented the fix exactly as scoped in the issue: wrapped all five vulnerable 
 ### Code Changes
 
 - **Files modified:** `src/main/webapp/WEB-INF/jsp/documentManager/addedithtmldocument.jsp`
-- **Key commits:** [42e6de32ab](https://github.com/kpuentec/carlos/commit/42e6de32ab) — "fix: encode unescaped fields in addedithtmldocument.jsp to prevent stored XSS"
+- **Key commits:** [960f60f3bc](https://github.com/kpuentec/carlos/commit/960f60f3bc) — "fix: encode unescaped fields in addedithtmldocument.jsp to prevent stored XSS"
 - **Approach decisions:** Followed the existing `carlos:encode` pattern already used elsewhere in the same file rather than introducing a new encoding approach, matching context type (`htmlAttribute`, `html`, `javaScriptBlock`) to each field's actual output location.
 
 ---
