@@ -140,15 +140,15 @@ Implemented the fix exactly as scoped in the issue: wrapped all five vulnerable 
 
 ## Pull Request
 
-**PR Link:** [GitHub PR URL when submitted]
+**PR Link:** https://github.com/carlos-emr/carlos/pull/2927
 
-**PR Description:** [Draft or final PR description - much of the content above can be adapted]
+**PR Description:** Wraps five unencoded output locations in `addedithtmldocument.jsp` with the project's existing `carlos:encode` taglib using the appropriate context (`htmlAttribute`, `html`, `javaScriptBlock`) to prevent stored XSS payloads from executing when any provider opens the HTML document edit form.
 
 **Maintainer Feedback:**
 - [Date]: [Summary of feedback received]
 - [Date]: [How you addressed it]
 
-**Status:** [Awaiting review / Iterating / Approved / Merged]
+**Status:** [Awaiting review / Iterating / Approved / Merged] Awaiting review
 
 ---
 
