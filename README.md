@@ -104,38 +104,37 @@ Wrap each of the five vulnerable fields with `<carlos:encode>` using the appropr
 
 ## Testing Strategy
 
-### Unit Tests
-
-- [ ] Test case 1: [Description]
-- [ ] Test case 2: [Description]
-- [ ] Test case 3: [Description]
-
-### Integration Tests
-
-- [ ] Integration scenario 1
-- [ ] Integration scenario 2
-
 ### Manual Testing
 
-[What you tested manually and results]
+Since automated tests(unit + integration) don't map cleanly onto a pure output-encoding fix, verification was done manually at both the page-source level and live in the browser:
+- [X] Test case 1: **Source Author (line 404)** Re-submitted the original repro payload, `<img src=x onerror=alert(1)>`. Before the fix, the payload rendered raw and the alert fired. After the fix, page source shows `&lt;img src=x onerror=alert(1)>` and the alert no longer fires — confirmed via page source and live in-browser testing.
+- [X] Test case 2: **Source Facility (line 408)** Same `htmlAttribute` fix as Source Author. Couldn't live-test with a payload — found a pre-existing, unrelated bug where no value (payload or plain text) survives a submit + re-edit. Confirmed it's unrelated to this fix since Source Author persists fine; out of scope for #2315.
+- [X] Test case 3: **Added By / Reviewed names (lines 373, 428)** DB-managed provider data, not user-editable through this form. Visually confirmed correct rendering after the fix; no payload test possible since these aren't free-text fields.
+- [X] Test case 4: **Sub-class JS array (line 287)** Confirmed `docSubClassList` is still valid JS after the fix, with special characters now properly hex-escaped (`\x26`, `\/`, `\-`) per `javaScriptBlock` context rules. Data comes from the DB via an admin-managed process, not user input through this form, so live payload testing wasn't practical — verified at the code level instead.
+- [X] Test case 5: **Regression check** `make install` built clean. Re-opened the edit form and confirmed all other fields still render and function correctly.
 
 ---
 
 ## Implementation Notes
 
-### Week [X] Progress
+### Week 3 Progress
 
-[What you built this week, challenges faced, decisions made]
+Implemented the fix exactly as scoped in the issue: wrapped all five vulnerable output locations in `addedithtmldocument.jsp` with the project's existing `carlos:encode` taglib, matching the encoding context already established elsewhere in the same file.
 
-### Week [Y] Progress
-
-[Continue documenting as you work]
+**What I built:**
+- Line 404 (`formdata.getSource()`) — wrapped with `carlos:encode` in `htmlAttribute` context
+- Line 408 (`formdata.getSourceFacility()`) — wrapped with `carlos:encode` in `htmlAttribute` context
+- Line 373 (`EDocUtil.getProviderName(formdata.getDocCreator())`) — wrapped with `carlos:encode` in `html` context
+- Line 428 (`EDocUtil.getProviderName(formdata.getReviewerId())`) — wrapped with `carlos:encode` in `html` context
+- Line 287 (`subClasses.get(i)`) — wrapped with `carlos:encode` in `javaScriptBlock` context
+- Rebuilt with `make install`, verified clean compile
+- Manually re-ran the repro steps and confirmed the payload no longer executes
 
 ### Code Changes
 
-- **Files modified:** [List]
-- **Key commits:** [Links to important commits]
-- **Approach decisions:** [Why you chose certain approaches]
+- **Files modified:** `src/main/webapp/WEB-INF/jsp/documentManager/addedithtmldocument.jsp`
+- **Key commits:** [42e6de32ab](https://github.com/kpuentec/carlos/commit/42e6de32ab) — "fix: encode unescaped fields in addedithtmldocument.jsp to prevent stored XSS"
+- **Approach decisions:** Followed the existing `carlos:encode` pattern already used elsewhere in the same file rather than introducing a new encoding approach, matching context type (`htmlAttribute`, `html`, `javaScriptBlock`) to each field's actual output location.
 
 ---
 
@@ -157,20 +156,22 @@ Wrap each of the five vulnerable fields with `<carlos:encode>` using the appropr
 
 ### Technical Skills Gained
 
-[What you learned technically]
+- Tracing one reported symptom to all affected locations by pattern-matching, not just patching the one repro case.
+- Matching existing codebase conventions instead of "fixing" syntax that looked wrong but wasn't.
+- Docker/devcontainer basics: bringing containers up/down, exec'ing in, telling host shell from container shell apart.
 
 ### Challenges Overcome
 
-[What was hard and how you solved it]
+- Devcontainer hung on a Playwright install step — commented it out since it wasn't needed for this fix.
 
 ### What I'd Do Differently Next Time
 
-[Reflection on your process]
+- Look at precedent PRs (CodeRabbit linked several) earlier instead of figuring out conventions by trial and error.
 
 ---
 
 ## Resources Used
 
-- [Link to helpful documentation]
-- [Tutorial or Stack Overflow post that helped]
-- [GitHub issues or discussions that helped]
+- [CARLOS CONTRIBUTING.md](https://github.com/carlos-emr/carlos/blob/develop/CONTRIBUTING.md)
+- [Issue #2315](https://github.com/carlos-emr/carlos/issues/2315)
+- [OWASP XSS Prevention Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Cross_Site_Scripting_Prevention_Cheat_Sheet.html)
