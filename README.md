@@ -133,7 +133,9 @@ Implemented the fix exactly as scoped in the issue: wrapped all five vulnerable 
 ### Code Changes
 
 - **Files modified:** `src/main/webapp/WEB-INF/jsp/documentManager/addedithtmldocument.jsp`
-- **Key commits:** [960f60f3bc](https://github.com/kpuentec/carlos/commit/960f60f3bc) — "fix: encode unescaped fields in addedithtmldocument.jsp to prevent stored XSS"
+- **Key commits:**
+  - [960f60f3bc](https://github.com/kpuentec/carlos/commit/960f60f3bc) — "fix: encode unescaped fields in addedithtmldocument.jsp to prevent stored XSS"
+  - [dda28a4a7d](https://github.com/kpuentec/carlos/commit/dda28a4a7d) — "fix: use single quotes on carlos:encode context attributes"
 - **Approach decisions:** Followed the existing `carlos:encode` pattern already used elsewhere in the same file rather than introducing a new encoding approach, matching context type (`htmlAttribute`, `html`, `javaScriptBlock`) to each field's actual output location.
 
 ---
@@ -145,8 +147,10 @@ Implemented the fix exactly as scoped in the issue: wrapped all five vulnerable 
 **PR Description:** Wraps five unencoded output locations in `addedithtmldocument.jsp` with the project's existing `carlos:encode` taglib using the appropriate context (`htmlAttribute`, `html`, `javaScriptBlock`) to prevent stored XSS payloads from executing when any provider opens the HTML document edit form.
 
 **Maintainer Feedback:**
-- [Date]: [Summary of feedback received]
-- [Date]: [How you addressed it]
+- **Jun 18:** Gemini Code Assist flagged nested double quotes on `context="..."` attributes as potentially confusing to IDEs/linters/static analysis on the five changed lines. Ben-Heerema requested these be addressed before review.
+- **Jun 18:** Updated all five `context` attributes from double quotes to single quotes (e.g. `context='htmlAttribute'`) in a follow-up commit. Confirmed via `git push` and replied on the PR.
+- **Jun 19:** Ben-Heerema reviewed and confirmed the fix looks good, offered the choice to leave it as-is or continue tweaking. Agreed to leave it as submitted. Ben-Heerema marked the PR ready for review.
+
 
 **Status:** [Awaiting review / Iterating / Approved / Merged] Awaiting review
 
