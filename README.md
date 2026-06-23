@@ -152,7 +152,7 @@ Implemented the fix exactly as scoped in the issue: wrapped all five vulnerable 
 - **Jun 19:** Ben-Heerema reviewed and confirmed the fix looks good, offered the choice to leave it as-is or continue tweaking. Agreed to leave it as submitted. Ben-Heerema marked the PR ready for review.
 
 
-**Status:** [Awaiting review / Iterating / Approved / Merged] Awaiting review
+**Status:** [Awaiting review / Iterating / Approved / Merged] Approved
 
 ---
 
